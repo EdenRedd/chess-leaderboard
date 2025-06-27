@@ -4,8 +4,14 @@
 from pathlib import Path
 import requests
 import json
+import sys
 
-api_url = "https://api.chess.com/pub/player/hikaru"
+if len(sys.argv) > 1:
+    argument = sys.argv[1]
+else:
+    print("No arguments provided.")
+
+api_url = "https://api.chess.com/pub/player/" + str(argument)
 
 headers = {
     "User-Agent": (
