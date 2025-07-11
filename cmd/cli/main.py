@@ -6,12 +6,7 @@ import requests
 import json
 import sys
 
-if len(sys.argv) > 1:
-    argument = sys.argv[1]
-else:
-    print("No arguments provided.")
-
-api_url = "https://api.chess.com/pub/player/" + str(argument)
+api_url = "https://api.chess.com/pub/leaderboards"
 
 headers = {
     "User-Agent": (
@@ -30,3 +25,7 @@ if resp.ok:
     print(json.dumps(resp.json(), indent=2))
 else:
     print(resp.text[:200])
+
+
+#How are we going to manage the ingest I believe the best way to do it would be to do it by 
+
