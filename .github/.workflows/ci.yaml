@@ -1,0 +1,21 @@
+name: My CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Running build and tests"
+  cd:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - run: echo "This is a placeholder for the CD job. You can add deployment steps here."
