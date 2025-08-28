@@ -5,6 +5,7 @@ from pathlib import Path
 import requests
 import json
 import sys
+from cmd.ingest import playerData
 
 api_url = "https://api.chess.com/pub/leaderboards"
 
@@ -19,7 +20,9 @@ resp = requests.get(api_url, headers=headers, timeout=10)
 
 print("Status:", resp.status_code)
 if resp.ok:
-    playerDataObject = playerData(**resp.json().get())
+    playerJson = resp.json().get("daily", [0])[0]
+    print(playerJson)
+    #playerDataObject = playerData())
     #out_path = Path("samples/players/output.txt")
     #out_path.parent.mkdir(parents=True, exist_ok=True)
     #out_path.write_text(json.dumps(resp.json()))
