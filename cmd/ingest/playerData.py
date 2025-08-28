@@ -1,15 +1,31 @@
 from dataclasses import dataclass
-from typing import Optional
-from urllib.parse import urlparse
-from .playerProperties.trend_rank import trend_rank
-from .playerProperties.trend_score import trend_score  
+from typing import Any, Dict
 
-class Url(str):
-    def __new__(cls, value):
-        result = urlparse(value)
-        if not all([result.scheme, result.netloc]):
-            raise ValueError(f"Invalid URL: {value}")
-        return str.__new__(cls, value)
+Url = str  # Placeholder, replace with proper type if needed
+
+@dataclass
+class trend_score:
+    direction: int
+    delta: int
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "trend_score":
+        return cls(
+            direction=data["direction"],
+            delta=data["delta"]
+        )
+
+@dataclass
+class trend_rank:
+    direction: int
+    delta: int
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "trend_rank":
+        return cls(
+            direction=data["direction"],
+            delta=data["delta"]
+        )
 
 @dataclass
 class playerData:
@@ -23,15 +39,30 @@ class playerData:
     name: str
     status: str
     avatar: Url
-    trend_score: trend_score #replace with data class
-    trend_rank: trend_rank #replace with data class
+    trend_score: trend_score
+    trend_rank: trend_rank
     flair_code: str
     win_count: int
     loss_count: int
     draw_count: int
 
-
-
-
-
-
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "playerData":
+        return cls(
+            player_id=data["player_id"],
+            id=data["@id"],
+            url=data["url"],
+            username=data["username"],
+            score=data["score"],
+            rank=data["rank"],
+            country=data["country"],
+            name=data["name"],
+            status=data["status"],
+            avatar=data["avatar"],
+            trend_score=trend_score.from_json(data["trend_score"]),
+            trend_rank=trend_rank.from_json(data["trend_rank"]),
+            flair_code=data["flair_code"],
+            win_count=data["win_count"],
+            loss_count=data["loss_count"],
+            draw_count=data["draw_count"],
+        )
