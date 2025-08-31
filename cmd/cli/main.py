@@ -6,7 +6,10 @@ import requests
 import json
 import sys
 from cmd.ingest.playerData import playerData
+import boto3
 
+dynamodbService = boto3.resource('dynamodb')
+table = dynamodbService.Table('chess-leaderboard-players')
 api_url = "https://api.chess.com/pub/leaderboards"
 
 headers = {
@@ -23,12 +26,10 @@ if resp.ok:
     playerJson = resp.json().get("daily", [0])[0]
     print(playerJson)
     playerDataObject = playerData.from_json(playerJson)
+
+    table.put_item(Item={"hash_key": f"daily#{playerDataObject.country}", "range_key": f"{playerDataObject.rank}#{playerDataObject.id}" })
+    
     print(playerDataObject)
-    #playerDataObject = playerData())
-    #out_path = Path("samples/players/output.txt")
-    #out_path.parent.mkdir(parents=True, exist_ok=True)
-    #out_path.write_text(json.dumps(resp.json()))
-    #print(json.dumps(resp.json(), indent=2))
 else:
     print(resp.text[:200])
 
