@@ -29,7 +29,7 @@ class trend_rank:
 
 @dataclass
 class playerData:
-    player_id: str
+    player_id: int
     id: Url
     url: Url
     username: str
@@ -56,7 +56,7 @@ class playerData:
             score=data["score"],
             rank=data["rank"],
             country=data["country"],
-            name=data["name"],
+            name=data.get("name"), #Optional because some entries might be missing the name
             status=data["status"],
             avatar=data["avatar"],
             trend_score=trend_score.from_json(data["trend_score"]),
