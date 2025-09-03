@@ -8,6 +8,8 @@ import sys
 from cmd.ingest.playerData import playerData
 import boto3
 
+#separate the logic of calling the api 
+#separate the logic of calling the database to store the info
 dynamodbService = boto3.resource('dynamodb')
 table = dynamodbService.Table('chess-leaderboard-players')
 api_url = "https://api.chess.com/pub/leaderboards"
