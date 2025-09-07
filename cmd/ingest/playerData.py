@@ -1,68 +1,66 @@
-from dataclasses import dataclass
-from typing import Any, Dict
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
 
-Url = str  # Placeholder, replace with proper type if needed
-
-@dataclass
-class trend_score:
-    direction: int
-    delta: int
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "trend_score":
-        return cls(
-            direction=data["direction"],
-            delta=data["delta"]
-        )
-
-@dataclass
-class trend_rank:
-    direction: int
-    delta: int
+# Reuse one class for both trend_score and trend_rank since they share shape
+@dataclass(frozen=True)
+class TrendChange:
+    direction: int = 0
+    delta: int = 0
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "trend_rank":
+    def from_json(cls, data: Optional[Dict[str, Any]]) -> "TrendChange":
+        if not data:  # handles None or {}
+            return cls()
+
+        def to_int(v, default=0):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                return default
+
         return cls(
-            direction=data["direction"],
-            delta=data["delta"]
+            direction=to_int(data.get("direction"), 0),
+            delta=to_int(data.get("delta"), 0),
         )
 
+
 @dataclass
-class playerData:
-    player_id: int
-    id: Url
-    url: Url
+class PlayerData:
+    player_id: str
+    id: str
+    url: str
     username: str
     score: int
     rank: int
-    country: Url
-    name: str
+    country: str
+    name: Optional[str]
     status: str
-    avatar: Url
-    trend_score: trend_score
-    trend_rank: trend_rank
-    flair_code: str
-    win_count: int
-    loss_count: int
-    draw_count: int
+    avatar: str
+    trend_score: TrendChange = field(default_factory=TrendChange)
+    trend_rank: TrendChange = field(default_factory=TrendChange)
+    flair_code: str = ""
+    win_count: int = 0
+    loss_count: int = 0
+    draw_count: int = 0
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "playerData":
+    def from_json(cls, data: Dict[str, Any]) -> "PlayerData":
         return cls(
             player_id=data["player_id"],
             id=data["@id"],
             url=data["url"],
             username=data["username"],
-            score=data["score"],
-            rank=data["rank"],
+            score=int(data["score"]),
+            rank=int(data["rank"]),
             country=data["country"],
-            name=data.get("name"), #Optional because some entries might be missing the name
+            name=data.get("name"),
             status=data["status"],
             avatar=data["avatar"],
-            trend_score=trend_score.from_json(data["trend_score"]),
-            trend_rank=trend_rank.from_json(data["trend_rank"]),
+            # these two lines are the important part:
+            trend_score=TrendChange.from_json(data.get("trend_score")),
+            trend_rank=TrendChange.from_json(data.get("trend_rank")),
             flair_code=data["flair_code"],
-            win_count=data["win_count"],
-            loss_count=data["loss_count"],
-            draw_count=data["draw_count"],
+            win_count=int(data["win_count"]),
+            loss_count=int(data["loss_count"]),
+            draw_count=int(data["draw_count"]),
         )
