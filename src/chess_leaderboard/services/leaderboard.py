@@ -2,7 +2,7 @@ import boto3
 import requests
 import json
 import sys
-from cmd.ingest.playerData import PlayerData
+from src.chess_leaderboard.models.player import PlayerData
 from pathlib import Path
 
 def fetch_chess_data():
