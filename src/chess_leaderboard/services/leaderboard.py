@@ -46,12 +46,9 @@ def store_players_to_dynamo(players):
     print("About to print")
     for gameMode in players.keys():
         for item in players[gameMode]:
-            print(item)
             countryRequest = requests.get(item.country, headers=headers, timeout=10)
             countryResponseJson = countryRequest.json().get("code")
             playerRequest = requests.get(item.id, headers=headers, timeout=10)
-            print("================")
-            print(playerRequest)
             playerResponseJson = playerRequest.json().get("player_id")
             table.put_item(Item={"hash_key": f"{gameMode}#{countryResponseJson}", "range_key": f"{item.rank}#{playerResponseJson}", "player_id": f"{playerResponseJson}", "url": f"{item.url}", "username": f"{item.username}", "score" : f"{item.score}", "rank": f"{item.rank}", "country": f"{item.country}", "name": f"{item.name}", "status": f"{item.status}", "avatar": f"{item.avatar}", "flair_code": f"{item.flair_code}", "win_count": f"{item.win_count}", "loss_count": f"{item.loss_count}", "draw_count": f"{item.draw_count}" })
 
@@ -61,5 +58,5 @@ def lamda_handler(event, context):
     store_players_to_dynamo(playerGameModeHash)
     return {
         'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
+        'body': json.dumps('Finished updating chess leaderboard data!')
     }

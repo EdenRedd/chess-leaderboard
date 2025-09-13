@@ -1,0 +1,37 @@
+# --------------------
+# Terraform
+# --------------------
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/*.tfstate
+infra/*.tfstate.*
+infra/crash.log
+
+# --------------------
+# Python (for Lambda code)
+# --------------------
+src/__pycache__/
+src/*.pyc
+src/*.pyo
+src/*.pyd
+src/*.egg-info/
+src/*.egg
+
+# --------------------
+# Build artifacts
+# --------------------
+# Ignore Lambda package zips (you can commit them only if you want)
+*.zip
+
+# --------------------
+# OS files
+# --------------------
+.DS_Store
+Thumbs.db
+
+# --------------------
+# IDE/editor files
+# --------------------
+.vscode/
+.idea/
+*.swp
