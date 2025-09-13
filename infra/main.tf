@@ -2,7 +2,7 @@
 # 1. IAM Role for Lambda
 # --------------------------
 resource "aws_iam_role" "lambda_exec" {
-  name = "my_lambda_exec_role"
+  name = "populate_dynamo_lambda"
 
   assume_role_policy = <<EOF
   {
@@ -34,12 +34,12 @@ resource "aws_lambda_function" "my_lambda" {
   function_name = "my_lambda_function"
 
   # 👇 Fill this in: path to your code package (zip file)
-  filename         = "<<< path_to_your_lambda_code.zip >>>"
-  source_code_hash = filebase64sha256("<<< path_to_your_lambda_code.zip >>>")
+  filename         = "../function.zip"
+  source_code_hash = filebase64sha256("../function.zip")
 
   # 👇 Fill this in: runtime + handler (depends on your language)
-  runtime = "<<< e.g., python3.11 or nodejs18.x >>>"
-  handler = "<<< e.g., index.handler >>>"
+  runtime = "python3.13"
+  handler = "chess_leaderboard.services.leaderboard.lambda_handler"
 
   role = aws_iam_role.lambda_exec.arn
 }
