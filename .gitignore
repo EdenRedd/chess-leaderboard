@@ -6,6 +6,10 @@ infra/.terraform.lock.hcl
 infra/*.tfstate
 infra/*.tfstate.*
 infra/crash.log
+.terraform/
+*.tfstate
+*.tfstate.backup
+
 
 # --------------------
 # Python (for Lambda code)
