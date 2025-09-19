@@ -49,7 +49,7 @@ resource "aws_lambda_function" "my_lambda" {
 # --------------------------
 resource "aws_cloudwatch_event_rule" "my_schedule" {
   name                = "my-schedule"
-  schedule_expression = "rate(15 minutes)" # 👈 change to your cron/rate
+  schedule_expression = "rate(3 minutes)" # 👈 change to your cron/rate
 }
 
 # --------------------------
