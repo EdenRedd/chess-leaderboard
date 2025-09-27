@@ -21,6 +21,35 @@ resource "aws_iam_role" "lambda_exec" {
   EOF
 }
 
+resource "aws_iam_role_policy" "lambda_dynamo_policy" {
+  name = "lambda_dynamo_policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem"
+        ]
+        Resource = "arn:aws:dynamodb:*:*:table/chess-leaderboard-players"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+
 # Attach policies so Lambda can log to CloudWatch
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_exec.name
@@ -34,8 +63,8 @@ resource "aws_lambda_function" "my_lambda" {
   function_name = "my_lambda_function"
 
   # 👇 Fill this in: path to your code package (zip file)
-  filename         = "../chess_leaderboard_lambda.zip"
-  source_code_hash = filebase64sha256("../chess_leaderboard_lambda.zip")
+  filename         = "../chess_leaderboard_lambdaV5.zip"
+  source_code_hash = filebase64sha256("../chess_leaderboard_lambdaV5.zip")
 
   # 👇 Fill this in: runtime + handler (depends on your language)
   runtime = "python3.13"
