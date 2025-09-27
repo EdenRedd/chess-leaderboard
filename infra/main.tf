@@ -34,8 +34,8 @@ resource "aws_lambda_function" "my_lambda" {
   function_name = "my_lambda_function"
 
   # 👇 Fill this in: path to your code package (zip file)
-  filename         = "../function.zip"
-  source_code_hash = filebase64sha256("../function.zip")
+  filename         = "../chess_leaderboard_lambda.zip"
+  source_code_hash = filebase64sha256("../chess_leaderboard_lambda.zip")
 
   # 👇 Fill this in: runtime + handler (depends on your language)
   runtime = "python3.13"
