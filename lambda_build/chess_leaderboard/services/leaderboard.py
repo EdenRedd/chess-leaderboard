@@ -70,13 +70,13 @@ def store_players_to_dynamo(players):
     for gameMode in players.keys():
         for item in players[gameMode]:
             try:
-                countryResponseJson = requests.get(item.country, headers=headers, timeout=10).json().get("code")
-                playerResponseJson = requests.get(item.id, headers=headers, timeout=10).json().get("player_id")
+                # countryResponseJson = requests.get(item.country, headers=headers, timeout=10).json().get("code")
+                # playerResponseJson = requests.get(item.id, headers=headers, timeout=10).json().get("player_id")
 
                 put_item_result = table.put_item(Item={
-                    "hash_key": f"{gameMode}#{countryResponseJson}",
-                    "range_key": f"{item.rank}#{playerResponseJson}",
-                    "player_id": f"{playerResponseJson}",
+                    "hash_key": f"{gameMode}#{5}",
+                    "range_key": f"{item.rank}#{5}",
+                    "player_id": f"{5}",
                     "url": f"{item.url}",
                     "username": f"{item.username}",
                     "score": f"{item.score}",
