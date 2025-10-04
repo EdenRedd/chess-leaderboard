@@ -59,39 +59,60 @@ def fetch_chess_data():
 
 def store_players_to_dynamo(players):
     headers = {
-    "User-Agent": (
-        "chess-leaderboard-demo/0.1 "
-        "(https://github.com/yourGitHub; contact: you@example.com)"
-    )
+        "User-Agent": (
+            "chess-leaderboard-demo/0.1 "
+            "(https://github.com/yourGitHub; contact: you@example.com)"
+        )
     }
+
     dynamodbService = boto3.resource('dynamodb', region_name='us-east-2')
     table = dynamodbService.Table('chess-leaderboard-players')
-    print("About to print")
+
+    # Caches to avoid repeated API calls
+    country_cache = {}
+    player_cache = {}
+
+    print("Starting to store players...")
+
     for gameMode in players.keys():
         for item in players[gameMode]:
             try:
-                # countryResponseJson = requests.get(item.country, headers=headers, timeout=10).json().get("code")
-                # playerResponseJson = requests.get(item.id, headers=headers, timeout=10).json().get("player_id")
+                # Country caching
+                if item.country not in country_cache:
+                    response = requests.get(item.country, headers=headers, timeout=10)
+                    response.raise_for_status()
+                    country_cache[item.country] = response.json().get("code")
 
+                country_code = country_cache[item.country]
+
+                # Player ID caching
+                if item.id not in player_cache:
+                    response = requests.get(item.id, headers=headers, timeout=10)
+                    response.raise_for_status()
+                    player_cache[item.id] = response.json().get("player_id")
+
+                player_id = player_cache[item.id]
+
+                # Store in DynamoDB
                 put_item_result = table.put_item(Item={
-                    "hash_key": f"{gameMode}#{5}",
-                    "range_key": f"{item.rank}#{5}",
-                    "player_id": f"{5}",
-                    "url": f"{item.url}",
-                    "username": f"{item.username}",
-                    "score": f"{item.score}",
-                    "rank": f"{item.rank}",
-                    "country": f"{item.country}",
-                    "name": f"{item.name}",
-                    "status": f"{item.status}",
-                    "avatar": f"{item.avatar}",
-                    "flair_code": f"{item.flair_code}",
-                    "win_count": f"{item.win_count}",
-                    "loss_count": f"{item.loss_count}",
-                    "draw_count": f"{item.draw_count}"
+                    "hash_key": f"{gameMode}#{country_code}",
+                    "range_key": f"{item.rank}#{player_id}",
+                    "player_id": player_id,
+                    "url": item.url,
+                    "username": item.username,
+                    "score": item.score,
+                    "rank": item.rank,
+                    "country": item.country,
+                    "name": item.name,
+                    "status": item.status,
+                    "avatar": item.avatar,
+                    "flair_code": item.flair_code,
+                    "win_count": item.win_count,
+                    "loss_count": item.loss_count,
+                    "draw_count": item.draw_count
                 })
 
-                print(f"Put item result: {put_item_result}")
+                print(f"Stored {item.username} (rank {item.rank}) → {put_item_result}")
 
             except Exception as e:
                 print(f"An error occurred for {item.username}: {e}")

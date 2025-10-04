@@ -62,15 +62,18 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 resource "aws_lambda_function" "my_lambda" {
   function_name = "my_lambda_function"
 
-  # 👇 Fill this in: path to your code package (zip file)
-  filename         = "../chess_leaderboard_lambdaV5.zip"
-  source_code_hash = filebase64sha256("../chess_leaderboard_lambdaV5.zip")
+  # Path to your code package (zip file)
+  filename         = "../chess_leaderboard_lambdaV7.zip"
+  source_code_hash = filebase64sha256("../chess_leaderboard_lambdaV7.zip")
 
-  # 👇 Fill this in: runtime + handler (depends on your language)
+  # Runtime + handler
   runtime = "python3.13"
   handler = "chess_leaderboard.services.leaderboard.lambda_handler"
 
   role = aws_iam_role.lambda_exec.arn
+
+  # ✅ Set timeout to 8 minutes
+  timeout = 480
 }
 
 # --------------------------
