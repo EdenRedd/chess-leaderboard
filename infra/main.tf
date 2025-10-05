@@ -103,3 +103,7 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.my_schedule.arn
 }
+
+# TODO implement creating the dynamodb table
+
+# TODO create the s3 bucket to be used to store my snapshots
