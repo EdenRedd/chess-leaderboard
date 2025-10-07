@@ -66,7 +66,7 @@ def store_players_to_dynamo(players):
     }
 
     dynamodbService = boto3.resource('dynamodb', region_name='us-east-2')
-    table = dynamodbService.Table('chess-leaderboard-players')
+    table = dynamodbService.Table('leaderboard-table')
 
     # Caches to avoid repeated API calls
     country_cache = {}
@@ -95,8 +95,8 @@ def store_players_to_dynamo(players):
 
                 # Store in DynamoDB
                 put_item_result = table.put_item(Item={
-                    "hash_key": f"{gameMode}#{country_code}",
-                    "range_key": f"{item.rank}#{player_id}",
+                    "GameModeCountryCode": f"{gameMode}#{country_code}",
+                    "RankAndID": f"{item.rank}#{player_id}",
                     "player_id": player_id,
                     "url": item.url,
                     "username": item.username,

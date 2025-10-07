@@ -105,5 +105,21 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 }
 
 # TODO implement creating the dynamodb table
+resource "aws_dynamodb_table" "leaderboard-table" {
+  name           = "leaderboard-table"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "GameModeCountryCode"
+  range_key      = "RankAndID"
+
+  attribute {
+    name = "GameModeCountryCode"
+    type = "S"
+  }
+
+  attribute {
+    name = "RankAndID"
+    type = "S"
+  }
+}
 
 # TODO create the s3 bucket to be used to store my snapshots
