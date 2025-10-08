@@ -34,7 +34,7 @@ resource "aws_iam_role_policy" "lambda_dynamo_policy" {
           "dynamodb:PutItem",
           "dynamodb:UpdateItem"
         ]
-        Resource = "arn:aws:dynamodb:*:*:table/chess-leaderboard-players"
+        Resource = "arn:aws:dynamodb:*:*:table/leaderboard-table"
       },
       {
         Effect = "Allow"
@@ -104,7 +104,9 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   source_arn    = aws_cloudwatch_event_rule.my_schedule.arn
 }
 
-# TODO implement creating the dynamodb table
+# --------------------------
+# Dynamodb table declaration
+# --------------------------
 resource "aws_dynamodb_table" "leaderboard-table" {
   name           = "leaderboard-table"
   billing_mode   = "PAY_PER_REQUEST"
@@ -121,5 +123,9 @@ resource "aws_dynamodb_table" "leaderboard-table" {
     type = "S"
   }
 }
-
-# TODO create the s3 bucket to be used to store my snapshots
+# --------------------------
+# s3 bucket for snapshots
+# --------------------------
+resource "aws_s3_bucket" "leaderboard-snapshots" {
+  bucket = "leaderboard-snapshots"
+}
