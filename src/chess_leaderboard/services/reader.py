@@ -1,6 +1,8 @@
 import boto3
 import json
 from datetime import datetime
+from boto3.dynamodb.types import TypeDeserializer
+from decimal import Decimal
 
 dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
@@ -9,24 +11,42 @@ table = dynamodb.Table("leaderboard-table")
 
 #CODING ASSIGNMENT: Implement the following two functions
 
-#def create_snapshot():
-    #Declare the resources
+#We need a couple of things
+#1. Scan the items and put them into an object
+#2. Uploading the file to s3
+####### THOSE ARE THE 2 I AM ABOUT TO IMPLEMENT#########
+#3. We need a lambda function that will go to the snapshot and get the info
+#4. We need a function that will filter out based on params
+####### #3 and #4 we need to implement after this 
+def convert_decimals(obj):
+    if isinstance(obj, list):
+        return [convert_decimals(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: convert_decimals(v) for k, v in obj.items()}
+    elif isinstance(obj, Decimal):
+        # convert to float (or int if you prefer)
+        return float(obj)
+    else:
+        return obj
 
-    # Collect all items (handling pagination)
-    # do it with a while loop
+def create_snapshot():
+    dynamodb = boto3.resource('dynamodb')
+    leaderboardTable = dynamodb.Table('leaderboard-table')
 
-    # Optional: add metadata
-    # add some metadata like timestamp
+    entries = []
+    response = leaderboardTable.scan()
+    entries.extend([convert_decimals(i) for i in response['Items']])
 
-    #return snapshot_data
+    while 'LastEvaluatedKey' in response:
+        response = leaderboardTable.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+        entries.extend([convert_decimals(i) for i in response['Items']])
 
-#def upload_snapshot_to_s3(bucket_name, snapshot_data):
-    #Create object that you will store
-    #crete a timestamp for the file name
-    #create the file name/key
+    print("Successfully retrieved all DynamoDB items")
+    return entries
 
-    #put the object in s3
-    
+def upload_snapshot_to_s3(snapshot_data):
+    s3 = boto3.resource('s3')
+    obj = s3.Object('leaderboard-snapshots', 'folder/hello.txt')
 
-    # print(f"✅ Snapshot uploaded to s3://{bucket_name}/{file_name}")
-    # return file_name
+    obj.put(Body=json.dumps(snapshot_data),
+        ContentType='application/json')
