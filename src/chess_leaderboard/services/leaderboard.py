@@ -5,6 +5,13 @@ import sys
 from chess_leaderboard.models.player import PlayerData
 from pathlib import Path
 
+# --------------------------
+# This function fetches all the players on the leaderboard from chess.com
+# stores them into an object and returns them in form of a hash map
+# where the key is the game mode and the value is a list of players
+#
+# returns gameModeHash which is a hashmap of game mode keys and list of players for values
+# --------------------------
 def fetch_chess_data():
     api_url = "https://api.chess.com/pub/leaderboards"
 
@@ -56,7 +63,13 @@ def fetch_chess_data():
         print(f"Unexpected error: {e}")
         return {}
         
-
+# --------------------------
+# This function takes a hashmap of game modes and list of players
+# and stores them into a DynamoDB table
+#
+# param players: hashmap of game modes and list of players with keys being game modes
+# returns gameModeHash which is a hashmap of game mode keys and list of players for values
+# --------------------------
 def store_players_to_dynamo(players):
     headers = {
         "User-Agent": (
@@ -117,7 +130,11 @@ def store_players_to_dynamo(players):
             except Exception as e:
                 print(f"An error occurred for {item.username}: {e}")
 
-
+# --------------------------
+# This lambda handler function is the entry point for AWS Lambda
+# this particular lambda handler contains the logic to fetch the chess API leaderboard data
+# and stores it into DynamoDB
+# --------------------------
 def lambda_handler(event, context):
     playerGameModeHash = fetch_chess_data()
     store_players_to_dynamo(playerGameModeHash)

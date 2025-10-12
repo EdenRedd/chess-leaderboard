@@ -1,5 +1,5 @@
 # --------------------------
-# 1. IAM Role for Lambda
+# IAM Role for Lambda
 # --------------------------
 resource "aws_iam_role" "lambda_exec" {
   name = "populate_dynamo_lambda"
@@ -20,7 +20,9 @@ resource "aws_iam_role" "lambda_exec" {
   }
   EOF
 }
-
+# --------------------------
+# Custom resource definition to allow putting into our dynamodb table
+# --------------------------
 resource "aws_iam_role_policy" "lambda_dynamo_policy" {
   name = "lambda_dynamo_policy"
   role = aws_iam_role.lambda_exec.id
@@ -57,7 +59,8 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 }
 
 # --------------------------
-# 2. Lambda Function
+# Lambda Function points to the leaderboard function that handles storing
+# the incoming information from the Chess API
 # --------------------------
 resource "aws_lambda_function" "my_lambda" {
   function_name = "my_lambda_function"
@@ -77,7 +80,7 @@ resource "aws_lambda_function" "my_lambda" {
 }
 
 # --------------------------
-# 3. EventBridge Rule (Schedule)
+# EventBridge Rule (Schedule)
 # --------------------------
 resource "aws_cloudwatch_event_rule" "my_schedule" {
   name                = "my-schedule"
@@ -85,7 +88,7 @@ resource "aws_cloudwatch_event_rule" "my_schedule" {
 }
 
 # --------------------------
-# 4. EventBridge Target (Lambda)
+# EventBridge Target definition(Lambda)
 # --------------------------
 resource "aws_cloudwatch_event_target" "lambda_target" {
   rule      = aws_cloudwatch_event_rule.my_schedule.name
@@ -94,7 +97,7 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
 }
 
 # --------------------------
-# 5. Permission for EventBridge → Lambda
+# Permission for EventBridge → Lambda
 # --------------------------
 resource "aws_lambda_permission" "allow_eventbridge" {
   statement_id  = "AllowExecutionFromEventBridge"
@@ -123,6 +126,7 @@ resource "aws_dynamodb_table" "leaderboard-table" {
     type = "S"
   }
 }
+
 # --------------------------
 # s3 bucket for snapshots
 # --------------------------

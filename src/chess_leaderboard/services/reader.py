@@ -10,11 +10,6 @@ s3 = boto3.client('s3')
 table = dynamodb.Table("leaderboard-table")
 
 #CODING ASSIGNMENT: Implement the following two functions
-
-#We need a couple of things
-#1. Scan the items and put them into an object
-#2. Uploading the file to s3
-####### THOSE ARE THE 2 I AM ABOUT TO IMPLEMENT#########
 #3. We need a lambda function that will go to the snapshot and get the info
 #4. We need a function that will filter out based on params
 ####### #3 and #4 we need to implement after this 
