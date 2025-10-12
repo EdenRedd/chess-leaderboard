@@ -5,52 +5,57 @@ from boto3.dynamodb.types import TypeDeserializer
 from decimal import Decimal
 from datetime import datetime, timezone
 
-
-
-dynamodb = boto3.resource('dynamodb')
-s3 = boto3.client('s3')
-
-table = dynamodb.Table("leaderboard-table")
-
 #CODING ASSIGNMENT: Implement the following two functions
-#3. We need a lambda function that will go to the snapshot and get the info
+#3. We need a lambda function that will go get the dynamoentry for the snapshot
 #4. We need a function that will filter out based on params
 ####### #3 and #4 we need to implement after this 
-def convert_decimals(obj):
-    if isinstance(obj, list):
-        return [convert_decimals(i) for i in obj]
-    elif isinstance(obj, dict):
-        return {k: convert_decimals(v) for k, v in obj.items()}
-    elif isinstance(obj, Decimal):
-        # convert to float (or int if you prefer)
-        return float(obj)
-    else:
-        return obj
 
-def create_snapshot():
-    dynamodb = boto3.resource('dynamodb')
-    leaderboardTable = dynamodb.Table('leaderboard-table')
+def retrieve_snapshot_from_s3(snapshot_timestamp= None):
+    s3 = boto3.client('s3')
+    try:
+        if not snapshot_timestamp:
+            # Get the latest snapshot if no timestamp is provided
+            response = s3.list_objects_v2(Bucket='leaderboard-snapshots')
+            all_snapshots = response.get('Contents', [])
+            if not all_snapshots:
+                print("No snapshots found in the bucket.")
+                return None
+            latest_snapshot = max(all_snapshots, key=lambda x: x['LastModified'])
+            snapshot_timestamp = latest_snapshot['Key']
+        obj = s3.get_object(Bucket='leaderboard-snapshots', Key=snapshot_timestamp)
+        snapshot_data = json.loads(obj['Body'].read().decode('utf-8'))
+        return snapshot_data
+    except Exception as e:
+        print(f"Error retrieving snapshot: {e}")
+        return None
 
-    entries = []
-    response = leaderboardTable.scan()
-    entries.extend([convert_decimals(i) for i in response['Items']])
-
-    while 'LastEvaluatedKey' in response:
-        response = leaderboardTable.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
-        entries.extend([convert_decimals(i) for i in response['Items']])
-
-    print("Successfully retrieved all DynamoDB items")
-    return entries
-
-def upload_snapshot_to_s3(snapshot_data):
-    s3 = boto3.resource('s3')
-    dynamodb = boto3.resource('dynamodb')
-    leaderboardTable = dynamodb.Table('leaderboard-snapshots')
-    timestamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
-
-    obj = s3.Object('leaderboard-snapshots', 'timestamp')
-
-    obj.put(Body=json.dumps(snapshot_data),
-        ContentType='application/json')
+def filter_snapshot(snapshot_data, min_rating=None, max_rating=None, country=None):
+    filtered_data = {}
+    for mode, players in snapshot_data.items():
+        filtered_players = []
+        for player in players:
+            if min_rating and player.get('rating', 0) < min_rating:
+                continue
+            if max_rating and player.get('rating', 0) > max_rating:
+                continue
+            if country and player.get('country', '').lower() != country.lower():
+                continue
+            filtered_players.append(player)
+        filtered_data[mode] = filtered_players
+    return filtered_data
     
-    leaderboardTable.put_item(Item={"SnapshotType": "full", "SnapshotTimestamp": timestamp})
+def lambda_handler(event, context):
+    #Check if it is given a timestamp to retrieve a specific snapshot
+    #If not get the latest snapshot
+    #run the snapshot through the given filters
+    #return the filtered snapshot
+
+    timestamp = event.get("queryStringParameters", {}).get("timestamp")
+    snapshot_data = retrieve_snapshot_from_s3(timestamp)
+    filtered_data = filter_snapshot(snapshot_data, min_rating=1500, country="US")
+    print(filtered_data)
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(snapshot_data)
+    }

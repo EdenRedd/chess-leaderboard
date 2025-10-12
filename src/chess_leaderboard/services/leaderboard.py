@@ -4,6 +4,10 @@ import json
 import sys
 from chess_leaderboard.models.player import PlayerData
 from pathlib import Path
+from datetime import datetime
+from boto3.dynamodb.types import TypeDeserializer
+from decimal import Decimal
+from datetime import datetime, timezone
 
 # --------------------------
 # This function fetches all the players on the leaderboard from chess.com
@@ -130,6 +134,46 @@ def store_players_to_dynamo(players):
             except Exception as e:
                 print(f"An error occurred for {item.username}: {e}")
 
+
+def convert_decimals(obj):
+    if isinstance(obj, list):
+        return [convert_decimals(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: convert_decimals(v) for k, v in obj.items()}
+    elif isinstance(obj, Decimal):
+        # convert to float (or int if you prefer)
+        return float(obj)
+    else:
+        return obj
+
+def create_snapshot():
+    dynamodb = boto3.resource('dynamodb')
+    leaderboardTable = dynamodb.Table('leaderboard-table')
+
+    entries = []
+    response = leaderboardTable.scan()
+    entries.extend([convert_decimals(i) for i in response['Items']])
+
+    while 'LastEvaluatedKey' in response:
+        response = leaderboardTable.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+        entries.extend([convert_decimals(i) for i in response['Items']])
+
+    print("Successfully retrieved all DynamoDB items")
+    return entries
+
+def upload_snapshot_to_s3(snapshot_data):
+    s3 = boto3.resource('s3')
+    dynamodb = boto3.resource('dynamodb')
+    leaderboardTable = dynamodb.Table('leaderboard-snapshots')
+    timestamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
+
+    obj = s3.Object('leaderboard-snapshots', f'{timestamp}')
+
+    obj.put(Body=json.dumps(snapshot_data),
+        ContentType='application/json')
+    
+    leaderboardTable.put_item(Item={"SnapshotType": "full", "SnapshotTimestamp": timestamp})
+
 # --------------------------
 # This lambda handler function is the entry point for AWS Lambda
 # this particular lambda handler contains the logic to fetch the chess API leaderboard data
@@ -138,6 +182,8 @@ def store_players_to_dynamo(players):
 def lambda_handler(event, context):
     playerGameModeHash = fetch_chess_data()
     store_players_to_dynamo(playerGameModeHash)
+    snapshot = create_snapshot()
+    upload_snapshot_to_s3(snapshot)
     return {
         'statusCode': 200,
         'body': json.dumps('Finished updating chess leaderboard data!')

@@ -147,11 +147,46 @@ resource "aws_dynamodb_table" "leaderboard-snapshots" {
   }
 }
 
-
-
 # --------------------------
 # s3 bucket for snapshots
 # --------------------------
 resource "aws_s3_bucket" "leaderboard-snapshots" {
   bucket = "leaderboard-snapshots"
+}
+
+# --------------------------
+# Defining the lambda function to retrieve the API data
+# --------------------------
+resource "aws_lambda_function" "get_snapshot" {
+  function_name = "get-snapshot"
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  role          = aws_iam_role.lambda_exec.arn
+  filename      = "lambda_build.zip"
+}
+
+resource "aws_apigatewayv2_api" "snapshot_api" {
+  name          = "snapshot-api"
+  protocol_type = "HTTP"
+}
+
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id                 = aws_apigatewayv2_api.snapshot_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.get_snapshot.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "get_snapshot_route" {
+  api_id    = aws_apigatewayv2_api.snapshot_api.id
+  route_key = "GET /snapshot"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+resource "aws_lambda_permission" "apigw_invoke" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_snapshot.arn
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.snapshot_api.execution_arn}/*/*"
 }
