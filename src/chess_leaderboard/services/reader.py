@@ -3,6 +3,9 @@ import json
 from datetime import datetime
 from boto3.dynamodb.types import TypeDeserializer
 from decimal import Decimal
+from datetime import datetime, timezone
+
+
 
 dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
@@ -41,7 +44,13 @@ def create_snapshot():
 
 def upload_snapshot_to_s3(snapshot_data):
     s3 = boto3.resource('s3')
-    obj = s3.Object('leaderboard-snapshots', 'folder/hello.txt')
+    dynamodb = boto3.resource('dynamodb')
+    leaderboardTable = dynamodb.Table('leaderboard-snapshots')
+    timestamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
+
+    obj = s3.Object('leaderboard-snapshots', 'timestamp')
 
     obj.put(Body=json.dumps(snapshot_data),
         ContentType='application/json')
+    
+    leaderboardTable.put_item(Item={"SnapshotType": "full", "SnapshotTimestamp": timestamp})

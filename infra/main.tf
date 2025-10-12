@@ -108,7 +108,7 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 }
 
 # --------------------------
-# Dynamodb table declaration
+# Dynamodb table declaration for player and gamemode leaderboard
 # --------------------------
 resource "aws_dynamodb_table" "leaderboard-table" {
   name           = "leaderboard-table"
@@ -126,6 +126,28 @@ resource "aws_dynamodb_table" "leaderboard-table" {
     type = "S"
   }
 }
+
+# --------------------------
+# Dynamodb table declaration for snapshots of player leaderboard
+# --------------------------
+resource "aws_dynamodb_table" "leaderboard-snapshots" {
+  name         = "leaderboard-snapshots"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "SnapshotType"
+  range_key    = "SnapshotTimestamp"
+
+  attribute {
+    name = "SnapshotType"
+    type = "S"
+  }
+
+  attribute {
+    name = "SnapshotTimestamp"
+    type = "S"
+  }
+}
+
+
 
 # --------------------------
 # s3 bucket for snapshots
