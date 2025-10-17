@@ -170,13 +170,16 @@ resource "aws_lambda_function" "get_snapshot" {
 }
 
 # --------------------------
-# Declaring the resource for the API gateway will only make the API
+# Declaring the resource for the API gateway will only make the API container
 # --------------------------
 resource "aws_apigatewayv2_api" "snapshot_api" {
   name          = "snapshot-api"
   protocol_type = "HTTP"
 }
 
+# --------------------------
+# Ties the gateway to the lambda fumnction that actually handles the logic
+# --------------------------
 resource "aws_apigatewayv2_integration" "lambda_integration" {
   api_id                 = aws_apigatewayv2_api.snapshot_api.id
   integration_type       = "AWS_PROXY"
@@ -184,12 +187,18 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   payload_format_version = "2.0"
 }
 
+# --------------------------
+# Defines the HTTP route and attaches it to the integration that ties lambda to the endpoint
+# --------------------------
 resource "aws_apigatewayv2_route" "get_snapshot_route" {
   api_id    = aws_apigatewayv2_api.snapshot_api.id
   route_key = "GET /snapshot"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
+# --------------------------
+# Gives permission to my route to make calls to lambda
+# --------------------------
 resource "aws_lambda_permission" "apigw_invoke" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
