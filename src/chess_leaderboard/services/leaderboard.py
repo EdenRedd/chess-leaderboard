@@ -179,7 +179,7 @@ def upload_snapshot_to_s3(snapshot_data):
 # this particular lambda handler contains the logic to fetch the chess API leaderboard data
 # and stores it into DynamoDB
 # --------------------------
-def lambda_handler(event, context):
+def store_players_upload_snapshot(event, context):
     playerGameModeHash = fetch_chess_data()
     store_players_to_dynamo(playerGameModeHash)
     snapshot = create_snapshot()

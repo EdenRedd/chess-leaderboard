@@ -34,9 +34,13 @@ resource "aws_iam_role_policy" "lambda_dynamo_policy" {
         Effect = "Allow"
         Action = [
           "dynamodb:PutItem",
-          "dynamodb:UpdateItem"
+          "dynamodb:UpdateItem",
+          "dynamodb:Scan"
         ]
-        Resource = "arn:aws:dynamodb:*:*:table/leaderboard-table"
+        Resource = [
+          "arn:aws:dynamodb:*:*:table/leaderboard-table",
+          "arn:aws:dynamodb:*:*:table/leaderboard-snapshots"
+        ]
       },
       {
         Effect = "Allow"
@@ -62,20 +66,19 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 # Lambda Function points to the leaderboard function that handles storing
 # the incoming information from the Chess API
 # --------------------------
-resource "aws_lambda_function" "my_lambda" {
-  function_name = "my_lambda_function"
+resource "aws_lambda_function" "populate_player_table" {
+  function_name = "populate_players_in_leaderboard_table"
 
   # Path to your code package (zip file)
-  filename         = "../chess_leaderboard_lambdaV7.zip"
-  source_code_hash = filebase64sha256("../chess_leaderboard_lambdaV7.zip")
+  filename         = "../chess_leaderboard_lambdaV8.zip"
+  source_code_hash = filebase64sha256("../chess_leaderboard_lambdaV8.zip")
 
   # Runtime + handler
   runtime = "python3.13"
-  handler = "chess_leaderboard.services.leaderboard.lambda_handler"
+  handler = "chess_leaderboard.services.leaderboard.store_players_upload_snapshot"
 
   role = aws_iam_role.lambda_exec.arn
 
-  # ✅ Set timeout to 8 minutes
   timeout = 480
 }
 
@@ -93,7 +96,7 @@ resource "aws_cloudwatch_event_rule" "my_schedule" {
 resource "aws_cloudwatch_event_target" "lambda_target" {
   rule      = aws_cloudwatch_event_rule.my_schedule.name
   target_id = "my-lambda-target"
-  arn       = aws_lambda_function.my_lambda.arn
+  arn       = aws_lambda_function.populate_player_table.arn
 }
 
 # --------------------------
@@ -102,7 +105,7 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
 resource "aws_lambda_permission" "allow_eventbridge" {
   statement_id  = "AllowExecutionFromEventBridge"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.my_lambda.function_name
+  function_name = aws_lambda_function.populate_player_table.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.my_schedule.arn
 }
@@ -159,12 +162,16 @@ resource "aws_s3_bucket" "leaderboard-snapshots" {
 # --------------------------
 resource "aws_lambda_function" "get_snapshot" {
   function_name = "get-snapshot"
-  handler       = "lambda_function.lambda_handler"
+  handler       = "chess_leaderboard.services.reader.get_snapshot"
   runtime       = "python3.12"
   role          = aws_iam_role.lambda_exec.arn
-  filename      = "lambda_build.zip"
+  filename         = "../get_snapshotV1.zip"
+  source_code_hash = filebase64sha256("../get_snapshotV1.zip")
 }
 
+# --------------------------
+# Declaring the resource for the API gateway will only make the API
+# --------------------------
 resource "aws_apigatewayv2_api" "snapshot_api" {
   name          = "snapshot-api"
   protocol_type = "HTTP"
