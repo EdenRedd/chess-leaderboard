@@ -45,6 +45,18 @@ resource "aws_iam_role_policy" "lambda_dynamo_policy" {
       {
         Effect = "Allow"
         Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::leaderboard-snapshots",
+          "arn:aws:s3:::leaderboard-snapshots/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
@@ -205,4 +217,10 @@ resource "aws_lambda_permission" "apigw_invoke" {
   function_name = aws_lambda_function.get_snapshot.arn
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.snapshot_api.execution_arn}/*/*"
+}
+
+resource "aws_apigatewayv2_stage" "snapshot_stage" {
+  api_id      = aws_apigatewayv2_api.snapshot_api.id
+  name        = "$default"
+  auto_deploy = true
 }
