@@ -177,8 +177,9 @@ resource "aws_lambda_function" "get_snapshot" {
   handler       = "chess_leaderboard.services.reader.get_snapshot"
   runtime       = "python3.12"
   role          = aws_iam_role.lambda_exec.arn
-  filename         = "../get_snapshotV1.zip"
-  source_code_hash = filebase64sha256("../get_snapshotV1.zip")
+  filename         = "../get_snapshotV5.zip"
+  source_code_hash = filebase64sha256("../get_snapshotV5.zip")
+  timeout = 480
 }
 
 # --------------------------
@@ -224,3 +225,4 @@ resource "aws_apigatewayv2_stage" "snapshot_stage" {
   name        = "$default"
   auto_deploy = true
 }
+

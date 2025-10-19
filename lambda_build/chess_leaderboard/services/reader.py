@@ -39,7 +39,7 @@ def filter_snapshot(snapshot_data, min_rating=None, max_rating=None, country=Non
         filtered_data[mode] = filtered_players
     return filtered_data
     
-def lambda_handler(event, context):
+def get_snapshot(event, context):
     #Check if it is given a timestamp to retrieve a specific snapshot
     #If not get the latest snapshot
     #run the snapshot through the given filters
