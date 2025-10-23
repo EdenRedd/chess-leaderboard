@@ -6,9 +6,9 @@ from services.reader import *
 
 
 def main():
-    timestamp = event.get("queryStringParameters", {}).get("timestamp")
     snapshot = retrieve_snapshot_from_s3()
-    print(snapshot)
+    #filtered_data = filter_snapshot(snapshot, min_rating=902742.0, country="US")
+    #print(filtered_data)
 
 if __name__ == "__main__":
     main()
