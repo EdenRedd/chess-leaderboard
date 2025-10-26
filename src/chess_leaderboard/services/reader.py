@@ -41,8 +41,8 @@ def filter_snapshot(snapshot_data, game_Mode=None, country=None):
     filtered_players = []
 
     for player in snapshot_data:
-        player_country = player.get('country', '').split('/')[-1].lower()  # extract 'PH' from URL
-        gameMode = player.get('GameModeCountryCode', '').split('#')[0].lower()  # extract 'PH' from URL
+        player_country = player.get('GameModeCountryCode', '').split('#')[-1].lower()
+        gameMode = player.get('GameModeCountryCode', '').split('#')[0].lower() 
 
         if country and player_country != country.lower():
             continue
