@@ -7,8 +7,9 @@ from services.reader import *
 
 def main():
     snapshot = retrieve_snapshot_from_s3()
-    #filtered_data = filter_snapshot(snapshot, min_rating=902742.0, country="US")
-    #print(filtered_data)
+    filtered_data = filter_snapshot(snapshot, game_Mode="live_bughouse", country=None)
+    
+    print(filtered_data)
 
 if __name__ == "__main__":
     main()

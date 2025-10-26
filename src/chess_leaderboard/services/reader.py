@@ -37,18 +37,16 @@ def retrieve_snapshot_from_s3(snapshot_timestamp= None):
         print(f"Error retrieving snapshot: {e}")
         return None
 
-def filter_snapshot(snapshot_data, min_rating=None, max_rating=None, country=None):
+def filter_snapshot(snapshot_data, game_Mode=None, country=None):
     filtered_players = []
 
     for player in snapshot_data:
-        rating = player.get('score', 0)  # looks like your JSON uses 'score' not 'rating'
         player_country = player.get('country', '').split('/')[-1].lower()  # extract 'PH' from URL
+        gameMode = player.get('GameModeCountryCode', '').split('#')[0].lower()  # extract 'PH' from URL
 
-        if min_rating is not None and rating < min_rating:
-            continue
-        if max_rating is not None and rating > max_rating:
-            continue
         if country and player_country != country.lower():
+            continue
+        if game_Mode and gameMode != game_Mode.lower():
             continue
 
         filtered_players.append(player)
@@ -57,14 +55,13 @@ def filter_snapshot(snapshot_data, min_rating=None, max_rating=None, country=Non
 
     
 def get_snapshot(event, context):
-    #Check if it is given a timestamp to retrieve a specific snapshot
-    #If not get the latest snapshot
-    #run the snapshot through the given filters
-    #return the filtered snapshot
 
     #timestamp = event.get("queryStringParameters", {}).get("timestamp")
+    params = event.get("queryStringParameters", {})
+    country = params["country"] if "country" in params else None
+    game_mode = params["game_mode"] if "game_mode" in params else None
     snapshot_data = retrieve_snapshot_from_s3()
-    filtered_data = filter_snapshot(snapshot_data, min_rating=1500, country="US")
+    filtered_data = filter_snapshot(snapshot_data, game_Mode=game_mode, country=country)
     print(filtered_data)
     return {
         "statusCode": 200,
