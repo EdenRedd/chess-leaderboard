@@ -53,6 +53,28 @@ def filter_snapshot(snapshot_data, game_Mode=None, country=None):
 
     return filtered_players
 
+import json
+
+def sort_by_rank_desc(data):
+    # Sort descending by the numeric portion of "RankAndID"
+    sorted_data = sorted(
+        data,
+        key=lambda item: int(str(item["RankAndID"]).split("#")[0]),
+        reverse=False  # False = ascending (1 first), True = descending (highest first)
+    )
+    return sorted_data
+
+
+def sort_by_rank_desc(data):
+    # Sort descending by the numeric portion of "RankAndID"
+    sorted_data = sorted(
+        data,
+        key=lambda item: int(str(item["RankAndID"]).split("#")[0]),
+        reverse=False  # False = ascending (1 first), True = descending (highest first)
+    )
+    return sorted_data
+
+
     
 def get_snapshot(event, context):
 
@@ -62,9 +84,9 @@ def get_snapshot(event, context):
     game_mode = params["game_mode"] if "game_mode" in params else None
     snapshot_data = retrieve_snapshot_from_s3()
     filtered_data = filter_snapshot(snapshot_data, game_Mode=game_mode, country=country)
-    print(filtered_data)
+    sorted_data = sort_by_rank_desc(filtered_data)
     return {
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(snapshot_data)
+        "body": json.dumps(sorted_data)
     }

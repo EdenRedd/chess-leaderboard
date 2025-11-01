@@ -82,8 +82,8 @@ resource "aws_lambda_function" "populate_player_table" {
   function_name = "populate_players_in_leaderboard_table"
 
   # Path to your code package (zip file)
-  filename         = "../chess_leaderboard_lambdaV8.zip"
-  source_code_hash = filebase64sha256("../chess_leaderboard_lambdaV8.zip")
+  filename         = "../IngestorV1.zip"
+  source_code_hash = filebase64sha256("../IngestorV1.zip")
 
   # Runtime + handler
   runtime = "python3.13"
@@ -99,7 +99,7 @@ resource "aws_lambda_function" "populate_player_table" {
 # --------------------------
 resource "aws_cloudwatch_event_rule" "my_schedule" {
   name                = "my-schedule"
-  schedule_expression = "rate(15 minutes)" # 👈 change to your cron/rate
+  schedule_expression = "rate(3 minutes)" # 👈 change to your cron/rate
 }
 
 # --------------------------
@@ -177,8 +177,8 @@ resource "aws_lambda_function" "get_snapshot" {
   handler       = "chess_leaderboard.services.reader.get_snapshot"
   runtime       = "python3.12"
   role          = aws_iam_role.lambda_exec.arn
-  filename         = "../get_snapshotV5.zip"
-  source_code_hash = filebase64sha256("../get_snapshotV5.zip")
+  filename         = "../ReaderV3.zip"
+  source_code_hash = filebase64sha256("../ReaderV3.zip")
   timeout = 480
 }
 
