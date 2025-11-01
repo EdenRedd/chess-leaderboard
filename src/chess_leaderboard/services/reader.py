@@ -82,6 +82,7 @@ def get_snapshot(event, context):
     params = event.get("queryStringParameters", {})
     country = params["country"] if "country" in params else None
     game_mode = params["game_mode"] if "game_mode" in params else None
+    #Update the retrieve the snapshot from the bucket based on the game mode provided, otherwise return the whole snapshot
     snapshot_data = retrieve_snapshot_from_s3()
     filtered_data = filter_snapshot(snapshot_data, game_Mode=game_mode, country=country)
     sorted_data = sort_by_rank_desc(filtered_data)
