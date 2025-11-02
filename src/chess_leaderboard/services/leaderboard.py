@@ -183,8 +183,11 @@ def store_players_upload_snapshot(event, context):
     playerGameModeHash = fetch_chess_data()
     store_players_to_dynamo(playerGameModeHash)
     snapshot = create_snapshot()
+    #seperate the snapshots into a list of their own game modes
+    #Edit the upload function to upload seperate files for the game modes
     upload_snapshot_to_s3(snapshot)
     return {
         'statusCode': 200,
         'body': json.dumps('Finished updating chess leaderboard data!')
     }
+
