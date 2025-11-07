@@ -146,22 +146,18 @@ def convert_decimals(obj):
     else:
         return obj
 
-#Scans the whole table 
-#should instead scan for each game mode
-#Once it has compiled its entries then send to upload
-#change upload to iterate and upload in folder
 def create_snapshot():
     dynamodb = boto3.resource('dynamodb')
     leaderboardTable = dynamodb.Table('leaderboard-table')
 
-    entries = [] 
+    entries = []
     response = leaderboardTable.scan()
     entries.extend([convert_decimals(i) for i in response['Items']])
 
     while 'LastEvaluatedKey' in response:
         response = leaderboardTable.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
         entries.extend([convert_decimals(i) for i in response['Items']])
-        
+
     print("Successfully retrieved all DynamoDB items")
     return entries
 
@@ -170,7 +166,6 @@ def upload_snapshot_to_s3(snapshot_data):
     dynamodb = boto3.resource('dynamodb')
     leaderboardTable = dynamodb.Table('leaderboard-snapshots')
     timestamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
-    #Here instead of creating an object we want to create a folder with timestamp in order to keep our gamemodes in
 
     obj = s3.Object('leaderboard-snapshots', f'{timestamp}')
 
