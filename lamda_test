@@ -1,8 +1,0 @@
-import sys, os
-sys.path.append(os.path.abspath("src"))  # add the src folder to the path
-from src.chess_leaderboard.services.leaderboard import lambda_handler
-
-event = { "test": "value" }
-context = None  # or a stub object
-response = lambda_handler(event, context)
-print(response)

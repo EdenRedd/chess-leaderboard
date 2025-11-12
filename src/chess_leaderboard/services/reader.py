@@ -1,11 +1,7 @@
 import boto3
 import json
-from datetime import datetime
-from boto3.dynamodb.types import TypeDeserializer
-from decimal import Decimal
-from datetime import datetime, timezone
 
-def retrieve_snapshot_from_s3(snapshot_timestamp= None):
+def retrieve_snapshot_from_s3(snapshot_timestamp= None, game_mode= None):
     s3 = boto3.client('s3')
     print("Function called successfully, Running retrieve_snapshot_from_s3")
     all_snapshots = []
@@ -13,20 +9,16 @@ def retrieve_snapshot_from_s3(snapshot_timestamp= None):
         if not snapshot_timestamp:
             print("Retrieving latest snapshot")
             # Get the latest snapshot if no timestamp is provided
-            response = s3.list_objects_v2(Bucket='leaderboard-snapshots')
-            all_snapshots.extend(response.get('Contents', []))
+            response = s3.list_objects_v2(Bucket='leaderboard-snapshots', Delimiter='/')
+            folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
 
-            while response.get('IsTruncated'):
-                response = s3.list_objects_v2(
-                    Bucket='leaderboard-snapshots',
-                    ContinuationToken=response['NextContinuationToken']
-                )
-                all_snapshots.extend(response.get('Contents', []))
-            if not all_snapshots:
-                print("No snapshots found in the bucket.")
+            if not folders:
+                print("No folders found.")
                 return None
-            latest_snapshot = max(all_snapshots, key=lambda x: x['LastModified'])
-            snapshot_timestamp = latest_snapshot['Key']
+
+# Optionally, get the latest by parsing the timestamp in the folder name
+            latest_folder = max(folders)  # works if timestamp format is lexically sortable
+            print(f"Latest folder: {latest_folder}")
         print("Retrieved latest snapshot:", snapshot_timestamp)
         obj = s3.get_object(Bucket='leaderboard-snapshots', Key=snapshot_timestamp)
         snapshot_data = json.loads(obj['Body'].read().decode('utf-8'))

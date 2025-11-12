@@ -9,6 +9,18 @@ from boto3.dynamodb.types import TypeDeserializer
 from decimal import Decimal
 from datetime import datetime, timezone
 
+GAME_MODES = ['daily',
+    'daily960',
+    'tactics',
+    'battle',
+    'live_blitz',
+    'live_blitz960',
+    'rush',
+    'live_threecheck',
+    'live_rapid',
+    'live_bullet',
+    'live_bughouse',]
+
 # --------------------------
 # This function fetches all the players on the leaderboard from chess.com
 # stores them into an object and returns them in form of a hash map
@@ -161,19 +173,53 @@ def create_snapshot():
     print("Successfully retrieved all DynamoDB items")
     return entries
 
+def filter_snapshot(snapshot_data, game_Mode=None, country=None):
+    filtered_players = []
+
+    for player in snapshot_data:
+        player_country = player.get('GameModeCountryCode', '').split('#')[-1].lower()
+        gameMode = player.get('GameModeCountryCode', '').split('#')[0].lower() 
+
+        if country and player_country != country.lower():
+            continue
+        if game_Mode and gameMode != game_Mode.lower():
+            continue
+
+        filtered_players.append(player)
+
+    return filtered_players
+
+import json
+
 def upload_snapshot_to_s3(snapshot_data):
-    s3 = boto3.resource('s3')
+    s3 = boto3.client('s3')
     dynamodb = boto3.resource('dynamodb')
     leaderboardTable = dynamodb.Table('leaderboard-snapshots')
     timestamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
-
-    obj = s3.Object('leaderboard-snapshots', f'{timestamp}')
-
-    obj.put(Body=json.dumps(snapshot_data),
-        ContentType='application/json')
+    safe_name = timestamp.replace(":", "-").replace("+", "-")
     
-    leaderboardTable.put_item(Item={"SnapshotType": "full", "SnapshotTimestamp": timestamp})
+    
+    for i in GAME_MODES:
+        #obj = bucket.Object(f'leaderboard-snapshots/{safe_name}/{i}.json')
+        filtered_snapshot = filter_snapshot(snapshot_data, game_Mode=i, country=None)
+        sortedByRank = sort_by_rank_desc(filtered_snapshot)
+        s3.put_object(
+            Bucket='leaderboard-snapshots',
+            Key=f'{safe_name}/{i}.json',
+            Body=json.dumps(sortedByRank),
+            ContentType='application/json')
+    
+    leaderboardTable.put_item(Item={"SnapshotType": "IndividualGameMode", "SnapshotTimestamp": timestamp})
 
+
+def sort_by_rank_desc(data):
+    # Sort descending by the numeric portion of "RankAndID"
+    sorted_data = sorted(
+        data,
+        key=lambda item: int(str(item["RankAndID"]).split("#")[0]),
+        reverse=False  # False = ascending (1 first), True = descending (highest first)
+    )
+    return sorted_data
 # --------------------------
 # This lambda handler function is the entry point for AWS Lambda
 # this particular lambda handler contains the logic to fetch the chess API leaderboard data
