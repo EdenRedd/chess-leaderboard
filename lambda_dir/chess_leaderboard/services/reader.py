@@ -1,7 +1,11 @@
 import boto3
 import json
+from datetime import datetime
+from boto3.dynamodb.types import TypeDeserializer
+from decimal import Decimal
+from datetime import datetime, timezone
 
-def retrieve_snapshot_from_s3(snapshot_timestamp= None, game_mode= None):
+def retrieve_snapshot_from_s3(snapshot_timestamp= None):
     s3 = boto3.client('s3')
     print("Function called successfully, Running retrieve_snapshot_from_s3")
     all_snapshots = []
@@ -9,16 +13,20 @@ def retrieve_snapshot_from_s3(snapshot_timestamp= None, game_mode= None):
         if not snapshot_timestamp:
             print("Retrieving latest snapshot")
             # Get the latest snapshot if no timestamp is provided
-            response = s3.list_objects_v2(Bucket='leaderboard-snapshots', Delimiter='/')
-            folders = [prefix['Prefix'] for prefix in response.get('CommonPrefixes', [])]
+            response = s3.list_objects_v2(Bucket='leaderboard-snapshots')
+            all_snapshots.extend(response.get('Contents', []))
 
-            if not folders:
-                print("No folders found.")
+            while response.get('IsTruncated'):
+                response = s3.list_objects_v2(
+                    Bucket='leaderboard-snapshots',
+                    ContinuationToken=response['NextContinuationToken']
+                )
+                all_snapshots.extend(response.get('Contents', []))
+            if not all_snapshots:
+                print("No snapshots found in the bucket.")
                 return None
-
-# Optionally, get the latest by parsing the timestamp in the folder name
-            latest_folder = max(folders)  # works if timestamp format is lexically sortable
-            print(f"Latest folder: {latest_folder}")
+            latest_snapshot = max(all_snapshots, key=lambda x: x['LastModified'])
+            snapshot_timestamp = latest_snapshot['Key']
         print("Retrieved latest snapshot:", snapshot_timestamp)
         obj = s3.get_object(Bucket='leaderboard-snapshots', Key=snapshot_timestamp)
         snapshot_data = json.loads(obj['Body'].read().decode('utf-8'))
@@ -76,8 +84,10 @@ def get_snapshot(event, context):
     game_mode = params["game_mode"] if "game_mode" in params else None
     #Update the retrieve the snapshot from the bucket based on the game mode provided, otherwise return the whole snapshot
     snapshot_data = retrieve_snapshot_from_s3()
+    filtered_data = filter_snapshot(snapshot_data, game_Mode=game_mode, country=country)
+    sorted_data = sort_by_rank_desc(filtered_data)
     return {
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(snapshot_data)
+        "body": json.dumps(sorted_data)
     }
